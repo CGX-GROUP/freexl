@@ -25,7 +25,7 @@ $(FREEXL_DLL):	freexl_i.lib
 freexl_i.lib:	$(LIBOBJ)
 	link /debug /dll /out:$(FREEXL_DLL) \
 		/implib:freexl_i.lib $(LIBOBJ) \
-		..\deps\lib\iconv.lib
+		..\deps\lib\libiconv.lib
 	if exist $(FREEXL_DLL).manifest mt -manifest \
 		$(FREEXL_DLL).manifest -outputresource:$(FREEXL_DLL);2 
 
