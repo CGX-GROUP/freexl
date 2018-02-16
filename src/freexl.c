@@ -91,7 +91,7 @@ freexl_version (void)
 
 #if defined(_WIN32) && !defined(__MINGW32__)
 /* MSVC compiler doesn't support lround() at all */
-static double
+double
 round (double num)
 {
     double integer = ceil (num);
@@ -100,7 +100,7 @@ round (double num)
     return integer - num >= 0.5 ? integer - 1.0 : integer;
 }
 
-static long
+long
 lround (double num)
 {
     long integer = (long) round (num);
