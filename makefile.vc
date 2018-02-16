@@ -7,7 +7,7 @@
 LIBOBJ	               =	freexl.obj
 FREEXL_DLL	 	       =	freexl$(VERSION).dll
 
-CFLAGS	=	/nologo -IC:\OSGeo4W\include -I. -Iheaders $(OPTFLAGS)
+CFLAGS	=	/nologo -I..\deps\include -I. -Iheaders $(OPTFLAGS)
 
 default:	all
 
@@ -25,7 +25,7 @@ $(FREEXL_DLL):	freexl_i.lib
 freexl_i.lib:	$(LIBOBJ)
 	link /debug /dll /out:$(FREEXL_DLL) \
 		/implib:freexl_i.lib $(LIBOBJ) \
-		C:\OSGeo4w\lib\iconv.lib
+		..\deps\lib\iconv.lib
 	if exist $(FREEXL_DLL).manifest mt -manifest \
 		$(FREEXL_DLL).manifest -outputresource:$(FREEXL_DLL);2 
 
