@@ -2,7 +2,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS = headers src tests examples
 
-EXTRA_DIST = makefile.vc nmake.opt \
+EXTRA_DIST = makefile.vc nmake.opt makefile64.vc nmake64.opt \
 	images/piazza.jpg images/piazza.eps mainpage.doxy config-msvc.h
 
 AUTOMAKE_OPTIONS = dist-zip foreign

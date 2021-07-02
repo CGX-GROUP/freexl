@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT(FreeXL, 1.0.4, a.furieri@lqt.it)
+AC_INIT(FreeXL, 1.0.6, a.furieri@lqt.it)
 AC_LANG(C)
 AC_CONFIG_AUX_DIR([.])
 AC_CONFIG_MACRO_DIR([m4])

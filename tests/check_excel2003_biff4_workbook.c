@@ -49,22 +49,21 @@
 
 #include "freexl.h"
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     const void *handle;
     int ret;
-    unsigned int info;
-    const char *worksheet_name;
-    unsigned short active_idx;
-    unsigned int num_rows;
-    unsigned short num_columns;
-    FreeXL_CellValue cell_value;
-   
+
     ret = freexl_open ("testdata/simple2003_4WB.xlw", &handle);
-    if (ret != FREEXL_CFBF_INVALID_SIGNATURE) {
-	fprintf(stderr, "unexpected result for open(): %d\n", ret);
-	return -1;
-    }
+    if (ret != FREEXL_CFBF_INVALID_SIGNATURE)
+      {
+	  fprintf (stderr, "unexpected result for open(): %d\n", ret);
+	  return -1;
+      }
+
+    if (argc > 1 || argv[0] == NULL)
+	argc = 1;		/* silencing stupid compiler warnings */
 
     return 0;
 }

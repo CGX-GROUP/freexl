@@ -49,197 +49,212 @@
 
 #include "freexl.h"
 
-const unsigned int expected_fat_flag[] = { 
-        0xfffffffd,
-        0xffffffff,
-        0xfffffffe,
-        0x00000004,
-        0x00000005,
-        0x00000006,
-        0x00000007,
-        0x00000008,
-        0x00000009,
-        0xfffffffe,
-        0x0000000b,
-        0xfffffffe,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff,
-        0xffffffff
- };
- 
-int main (int argc, char *argv[])
+const unsigned int expected_fat_flag[] = {
+    0xfffffffd,
+    0xffffffff,
+    0xfffffffe,
+    0x00000004,
+    0x00000005,
+    0x00000006,
+    0x00000007,
+    0x00000008,
+    0x00000009,
+    0xfffffffe,
+    0x0000000b,
+    0xfffffffe,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff,
+    0xffffffff
+};
+
+int
+main (int argc, char *argv[])
 {
     const void *handle;
     int ret;
     unsigned int fat_count = 0;
     unsigned int fat_flag = 0;
-    int i;
+    unsigned int i;
 
     ret = freexl_open ("testdata/oocalc_simple97.xls", &handle);
-    if (ret != FREEXL_OK) {
-	fprintf(stderr, "OPEN ERROR: %d\n", ret);
-	return -1;
-    }
-    
-    ret = freexl_get_info(handle, FREEXL_CFBF_FAT_COUNT, &fat_count);
-    if (ret != FREEXL_OK) {
-	fprintf(stderr, "GET_INFO ERROR for FAT entries count: %d\n", ret);
-	return -2;
-    }
-    if (fat_count != 128) {
-	fprintf(stderr, "Unexpected FAT entries count: %d\n", fat_count);
-	return -3;
-    }
+    if (ret != FREEXL_OK)
+      {
+	  fprintf (stderr, "OPEN ERROR: %d\n", ret);
+	  return -1;
+      }
 
-    for (i = 0; i < fat_count; ++i) {
-	ret = freexl_get_FAT_entry (handle, i, &fat_flag);
-	if (ret != FREEXL_OK) {
-	    fprintf(stderr, "get_FAT_entry error for %i: %d\n", i, ret);
-	    return -4;
-	}
-	if (fat_flag != expected_fat_flag[i]) {
-	    fprintf(stderr, "unexpected flag at %i: 0x%08x (expected 0x%08x)\n",
-		    i, fat_flag, expected_fat_flag[i]);
-	}
-    }
-    
+    ret = freexl_get_info (handle, FREEXL_CFBF_FAT_COUNT, &fat_count);
+    if (ret != FREEXL_OK)
+      {
+	  fprintf (stderr, "GET_INFO ERROR for FAT entries count: %d\n", ret);
+	  return -2;
+      }
+    if (fat_count != 128)
+      {
+	  fprintf (stderr, "Unexpected FAT entries count: %d\n", fat_count);
+	  return -3;
+      }
+
+    for (i = 0; i < fat_count; ++i)
+      {
+	  ret = freexl_get_FAT_entry (handle, i, &fat_flag);
+	  if (ret != FREEXL_OK)
+	    {
+		fprintf (stderr, "get_FAT_entry error for %i: %d\n", i, ret);
+		return -4;
+	    }
+	  if (fat_flag != expected_fat_flag[i])
+	    {
+		fprintf (stderr,
+			 "unexpected flag at %i: 0x%08x (expected 0x%08x)\n", i,
+			 fat_flag, expected_fat_flag[i]);
+	    }
+      }
+
     /* error case checks */
     ret = freexl_get_FAT_entry (handle, fat_count, &fat_flag);
-    if (ret != FREEXL_CFBF_ILLEGAL_FAT_ENTRY) {
-	fprintf(stderr, "get_FAT_entry error for +1: %d\n", ret);
-	return -6;
-    }
+    if (ret != FREEXL_CFBF_ILLEGAL_FAT_ENTRY)
+      {
+	  fprintf (stderr, "get_FAT_entry error for +1: %d\n", ret);
+	  return -6;
+      }
 
     ret = freexl_get_FAT_entry (NULL, 0, &fat_flag);
-    if (ret != FREEXL_NULL_HANDLE) {
-	fprintf(stderr, "get_FAT_entry error for null handle: %d\n", ret);
-	return -7;
-    }
+    if (ret != FREEXL_NULL_HANDLE)
+      {
+	  fprintf (stderr, "get_FAT_entry error for null handle: %d\n", ret);
+	  return -7;
+      }
 
     ret = freexl_get_FAT_entry (handle, 0, NULL);
-    if (ret != FREEXL_NULL_ARGUMENT) {
-	fprintf(stderr, "get_FAT_entry error for null arg: %d\n", ret);
-	return -8;
-    }
+    if (ret != FREEXL_NULL_ARGUMENT)
+      {
+	  fprintf (stderr, "get_FAT_entry error for null arg: %d\n", ret);
+	  return -8;
+      }
 
     ret = freexl_close (handle);
-    if (ret != FREEXL_OK) {
-	fprintf(stderr, "CLOSE ERROR: %d\n", ret);
-	return -6;
-    }
+    if (ret != FREEXL_OK)
+      {
+	  fprintf (stderr, "CLOSE ERROR: %d\n", ret);
+	  return -6;
+      }
+
+    if (argc > 1 || argv[0] == NULL)
+	argc = 1;		/* silencing stupid compiler warnings */
 
     return 0;
 }

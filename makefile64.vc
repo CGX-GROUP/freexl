@@ -2,12 +2,12 @@
 #
 # NMAKE Makefile to build libfreexl on Windows
 #
-!INCLUDE nmake.opt
+!INCLUDE nmake64.opt
 
 LIBOBJ	               =	freexl.obj
 FREEXL_DLL	 	       =	freexl$(VERSION).dll
 
-CFLAGS	=	/nologo -I. -Iheaders -IC:\OSGeo4W\include $(OPTFLAGS)
+CFLAGS	=	/nologo -I. -Iheaders -IC:\OSGeo4W64\include $(OPTFLAGS)
 
 default:	all
 
@@ -25,7 +25,7 @@ $(FREEXL_DLL):	freexl_i.lib
 freexl_i.lib:	$(LIBOBJ)
 	link /debug /dll /out:$(FREEXL_DLL) \
 		/implib:freexl_i.lib $(LIBOBJ) \
-		C:\OSGeo4w\lib\iconv.lib
+		C:\OSGeo4w64\lib\iconv.lib
 	if exist $(FREEXL_DLL).manifest mt -manifest \
 		$(FREEXL_DLL).manifest -outputresource:$(FREEXL_DLL);2 
 

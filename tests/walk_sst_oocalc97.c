@@ -41,13 +41,14 @@
 / the provisions above, a recipient may use your version of this file under
 / the terms of any one of the MPL, the GPL or the LGPL.
 / 
-*/#include <stdlib.h>
+*/
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "freexl.h"
 
-const char * expected_string[] = { 
+const char *expected_string[] = {
     "Col 1",
     "Col 2",
     "time",
@@ -57,67 +58,81 @@ const char * expected_string[] = {
     "B"
 };
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     const void *handle;
     int ret;
     unsigned int sst_count;
-    int i;
+    unsigned int i;
     const char *sst_entry;
 
     ret = freexl_open ("testdata/oocalc_simple97.xls", &handle);
-    if (ret != FREEXL_OK) {
-	fprintf(stderr, "OPEN ERROR: %d\n", ret);
-	return -1;
-    }
-    
-    ret = freexl_get_info(handle, FREEXL_BIFF_STRING_COUNT, &sst_count);
-    if (ret != FREEXL_OK) {
-	fprintf(stderr, "GET_INFO ERROR for SST string count: %d\n", ret);
-	return -2;
-    }
-    if (sst_count != 7) {
-	fprintf(stderr, "Unexpected SST string count: %d\n", sst_count);
-	return -3;
-    }
+    if (ret != FREEXL_OK)
+      {
+	  fprintf (stderr, "OPEN ERROR: %d\n", ret);
+	  return -1;
+      }
 
-    for (i = 0; i < sst_count; ++i) {
-	ret = freexl_get_SST_string (handle, i, &sst_entry);
-	if (ret != FREEXL_OK) {
-	    fprintf(stderr, "get_SST_string error for %i: %d\n", i, ret);
-	    return -4;
-	}
-	if (strcmp(sst_entry, expected_string[i]) != 0) {
-	    fprintf(stderr, "string mismatch at %i: got %s expected %s\n",
-		    i, sst_entry, expected_string[i]);
-	    return -5;
-	}
-    }
-    
+    ret = freexl_get_info (handle, FREEXL_BIFF_STRING_COUNT, &sst_count);
+    if (ret != FREEXL_OK)
+      {
+	  fprintf (stderr, "GET_INFO ERROR for SST string count: %d\n", ret);
+	  return -2;
+      }
+    if (sst_count != 7)
+      {
+	  fprintf (stderr, "Unexpected SST string count: %d\n", sst_count);
+	  return -3;
+      }
+
+    for (i = 0; i < sst_count; ++i)
+      {
+	  ret = freexl_get_SST_string (handle, i, &sst_entry);
+	  if (ret != FREEXL_OK)
+	    {
+		fprintf (stderr, "get_SST_string error for %i: %d\n", i, ret);
+		return -4;
+	    }
+	  if (strcmp (sst_entry, expected_string[i]) != 0)
+	    {
+		fprintf (stderr, "string mismatch at %i: got %s expected %s\n",
+			 i, sst_entry, expected_string[i]);
+		return -5;
+	    }
+      }
+
     /* error case checks */
     ret = freexl_get_SST_string (handle, sst_count, &sst_entry);
-    if (ret != FREEXL_BIFF_ILLEGAL_SST_INDEX) {
-	fprintf(stderr, "get_SST_string error for +1: %d\n", ret);
-	return -6;
-    }
+    if (ret != FREEXL_BIFF_ILLEGAL_SST_INDEX)
+      {
+	  fprintf (stderr, "get_SST_string error for +1: %d\n", ret);
+	  return -6;
+      }
 
     ret = freexl_get_SST_string (NULL, 0, &sst_entry);
-    if (ret != FREEXL_NULL_HANDLE) {
-	fprintf(stderr, "get_SST_string error for null handle: %d\n", ret);
-	return -7;
-    }
+    if (ret != FREEXL_NULL_HANDLE)
+      {
+	  fprintf (stderr, "get_SST_string error for null handle: %d\n", ret);
+	  return -7;
+      }
 
     ret = freexl_get_SST_string (handle, 0, NULL);
-    if (ret != FREEXL_NULL_ARGUMENT) {
-	fprintf(stderr, "get_SST_string error for null arg: %d\n", ret);
-	return -8;
-    }
+    if (ret != FREEXL_NULL_ARGUMENT)
+      {
+	  fprintf (stderr, "get_SST_string error for null arg: %d\n", ret);
+	  return -8;
+      }
 
     ret = freexl_close (handle);
-    if (ret != FREEXL_OK) {
-	fprintf(stderr, "CLOSE ERROR: %d\n", ret);
-	return -6;
-    }
+    if (ret != FREEXL_OK)
+      {
+	  fprintf (stderr, "CLOSE ERROR: %d\n", ret);
+	  return -6;
+      }
+
+    if (argc > 1 || argv[0] == NULL)
+	argc = 1;		/* silencing stupid compiler warnings */
 
     return 0;
 }

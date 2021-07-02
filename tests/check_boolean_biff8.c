@@ -49,84 +49,100 @@
 
 #include "freexl.h"
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     const void *handle;
     int ret;
     unsigned int info;
-    const char *worksheet_name;
-    unsigned short active_idx;
     unsigned int num_rows;
     unsigned short num_columns;
     FreeXL_CellValue cell_value;
-   
-    ret = freexl_open ("testdata/testbool.xls", &handle);
-    if (ret != FREEXL_OK) {
-	fprintf(stderr, "OPEN ERROR: %d\n", ret);
-	return -1;
-    }
 
-    ret = freexl_get_info(handle, FREEXL_BIFF_VERSION, &info);
-    if (ret != FREEXL_OK) {
-	fprintf(stderr, "GET_INFO ERROR for BIFF version: %d\n", ret);
-	return -2;
-    }
+    ret = freexl_open ("testdata/testbool.xls", &handle);
+    if (ret != FREEXL_OK)
+      {
+	  fprintf (stderr, "OPEN ERROR: %d\n", ret);
+	  return -1;
+      }
+
+    ret = freexl_get_info (handle, FREEXL_BIFF_VERSION, &info);
+    if (ret != FREEXL_OK)
+      {
+	  fprintf (stderr, "GET_INFO ERROR for BIFF version: %d\n", ret);
+	  return -2;
+      }
     if (info != FREEXL_BIFF_VER_8)
-    {
-	fprintf(stderr, "Unexpected BIFF version: %d\n", info);
-	return -3;
-    }
+      {
+	  fprintf (stderr, "Unexpected BIFF version: %d\n", info);
+	  return -3;
+      }
 
     ret = freexl_select_active_worksheet (handle, 0);
-    if (ret != FREEXL_OK) {
-	fprintf(stderr, "Error setting active worksheet: %d\n", ret);
-	return -4;
-    }
-    
+    if (ret != FREEXL_OK)
+      {
+	  fprintf (stderr, "Error setting active worksheet: %d\n", ret);
+	  return -4;
+      }
+
     ret = freexl_worksheet_dimensions (handle, &num_rows, &num_columns);
-    if (ret != FREEXL_OK) {
-	fprintf(stderr, "Error getting worksheet dimensions: %d\n", ret);
-	return -5;
-    }
-    if ((num_rows != 3) || (num_columns != 4)) {
-	fprintf(stderr, "Unexpected active sheet dimensions: %u x %u\n",
-	    num_rows, num_columns);
-	return -5;
-    }
+    if (ret != FREEXL_OK)
+      {
+	  fprintf (stderr, "Error getting worksheet dimensions: %d\n", ret);
+	  return -5;
+      }
+    if ((num_rows != 3) || (num_columns != 4))
+      {
+	  fprintf (stderr, "Unexpected active sheet dimensions: %u x %u\n",
+		   num_rows, num_columns);
+	  return -5;
+      }
 
     ret = freexl_get_cell_value (handle, 1, 1, &cell_value);
-    if (ret != FREEXL_OK) {
-	fprintf(stderr, "Error getting cell value (1,1): %d\n", ret);
-	return -6;
-    }
-    if (cell_value.type != FREEXL_CELL_INT) {
-	fprintf(stderr, "Unexpected cell (1,1) type: %u\n", cell_value.type);
-	return -7;
-    }
-    if (cell_value.value.int_value != 0) {
-	fprintf(stderr, "Unexpected cell (1,1) value: %d\n", cell_value.value.int_value);
-	return -8;
-    }
+    if (ret != FREEXL_OK)
+      {
+	  fprintf (stderr, "Error getting cell value (1,1): %d\n", ret);
+	  return -6;
+      }
+    if (cell_value.type != FREEXL_CELL_INT)
+      {
+	  fprintf (stderr, "Unexpected cell (1,1) type: %u\n", cell_value.type);
+	  return -7;
+      }
+    if (cell_value.value.int_value != 0)
+      {
+	  fprintf (stderr, "Unexpected cell (1,1) value: %d\n",
+		   cell_value.value.int_value);
+	  return -8;
+      }
 
     ret = freexl_get_cell_value (handle, 2, 1, &cell_value);
-    if (ret != FREEXL_OK) {
-	fprintf(stderr, "Error getting cell value (2,1): %d\n", ret);
-	return -9;
-    }
-    if (cell_value.type != FREEXL_CELL_INT) {
-	fprintf(stderr, "Unexpected cell (2,1) type: %u\n", cell_value.type);
-	return -10;
-    }
-    if (cell_value.value.int_value != 1) {
-	fprintf(stderr, "Unexpected cell (2,1) value: %d\n", cell_value.value.int_value);
-	return -11;
-    }
-    
+    if (ret != FREEXL_OK)
+      {
+	  fprintf (stderr, "Error getting cell value (2,1): %d\n", ret);
+	  return -9;
+      }
+    if (cell_value.type != FREEXL_CELL_INT)
+      {
+	  fprintf (stderr, "Unexpected cell (2,1) type: %u\n", cell_value.type);
+	  return -10;
+      }
+    if (cell_value.value.int_value != 1)
+      {
+	  fprintf (stderr, "Unexpected cell (2,1) value: %d\n",
+		   cell_value.value.int_value);
+	  return -11;
+      }
+
     ret = freexl_close (handle);
-    if (ret != FREEXL_OK) {
-	fprintf(stderr, "CLOSE ERROR: %d\n", ret);
-	return -12;
-    }
+    if (ret != FREEXL_OK)
+      {
+	  fprintf (stderr, "CLOSE ERROR: %d\n", ret);
+	  return -12;
+      }
+
+    if (argc > 1 || argv[0] == NULL)
+	argc = 1;		/* silencing stupid compiler warnings */
 
     return 0;
 }

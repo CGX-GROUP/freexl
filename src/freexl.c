@@ -89,9 +89,9 @@ freexl_version (void)
     return freexlversion;
 }
 
-#if defined(_WIN32) && !defined(__MINGW32__)
-/* MSVC compiler doesn't support lround() at all */
-double
+#if defined(_WIN32) && !defined(__MINGW32__) && _MSC_VER < 1800
+/* obsolete MSVC compiler doesn't support lround() at all */
+static double
 round (double num)
 {
     double integer = ceil (num);
@@ -100,7 +100,7 @@ round (double num)
     return integer - num >= 0.5 ? integer - 1.0 : integer;
 }
 
-long
+static long
 lround (double num)
 {
     long integer = (long) round (num);
@@ -287,7 +287,7 @@ convert_to_utf8 (iconv_t converter, const char *buf, int buflen, int *err)
 #endif
     size_t len;
     size_t utf8len;
-    int maxlen = buflen * 4;
+    int maxlen = (buflen * 4) + 1;
     char *pUtf8buf;
     *err = FREEXL_OK;
     if (!converter)
@@ -1109,6 +1109,11 @@ allocate_cells (biff_workbook * workbook)
 	return FREEXL_INSUFFICIENT_MEMORY;
 
 /* allocating the cell values array */
+    if (workbook->active_sheet->rows * workbook->active_sheet->columns <= 0)
+      {
+	  workbook->active_sheet->cell_values = NULL;
+	  return FREEXL_OK;
+      }
     workbook->active_sheet->cell_values =
 	malloc (sizeof (biff_cell_value) *
 		(workbook->active_sheet->rows *
@@ -1801,6 +1806,12 @@ parse_SST (biff_workbook * workbook, int swap)
 		      unsigned int i;
 		      for (i = 0; i < len; i++)
 			{
+			    if (p_string - workbook->record >=
+				(int)workbook->record_size)
+			      {
+				  /* buffer overflow: it's a preasumable crafted file intended to crash FreeXL */
+				  return FREEXL_CRAFTED_FILE;
+			      }
 			    *(utf16_buf + (utf16_off * 2) + (i * 2)) =
 				*p_string;
 			    p_string++;
@@ -1817,7 +1828,7 @@ parse_SST (biff_workbook * workbook, int swap)
 
 		/* skipping extra data (if any) */
 		p_string += utf16_skip;
-		if (p_string - workbook->record >= workbook->record_size)
+		if (p_string - workbook->record >= (int)workbook->record_size)
 		    next_skip =
 			(p_string - workbook->record) - workbook->record_size;
 		else
@@ -1912,6 +1923,11 @@ parse_SST (biff_workbook * workbook, int swap)
 		return FREEXL_OK;
 	    }
 
+	  if (len <= 0)
+	    {
+		/* zero length - it's a preasumable crafted file intended to crash FreeXL */
+		return FREEXL_CRAFTED_FILE;
+	    }
 	  if (!parse_unicode_string
 	      (workbook->utf16_converter, len, utf16, p_string, &utf8_string))
 	      return FREEXL_INVALID_CHARACTER;
@@ -1923,7 +1939,7 @@ parse_SST (biff_workbook * workbook, int swap)
 	      p_string += len * 2;
 	  /* skipping extra data (if any) */
 	  p_string += workbook->shared_strings.current_utf16_skip;
-	  if (p_string - workbook->record >= workbook->record_size)
+	  if (p_string - workbook->record >= (int)workbook->record_size)
 	      next_skip = (p_string - workbook->record) - workbook->record_size;
 	  else
 	      next_skip = 0;
@@ -3070,6 +3086,11 @@ parse_biff_record (biff_workbook * workbook, int swap)
 	  if (swap)
 	      swap32 (&offset);
 	  len = workbook->record[6];
+	  if (len <= 0)
+	    {
+		/* zero length - it's a preasumable crafted file intended to crash FreeXL */
+		return FREEXL_CRAFTED_FILE;
+	    }
 	  if (workbook->biff_version == FREEXL_BIFF_VER_5)
 	    {
 		/* BIFF5: codepage text */
@@ -3229,6 +3250,11 @@ parse_biff_record (biff_workbook * workbook, int swap)
 		get_unicode_params (p_string, swap, &start_offset, &utf16,
 				    &extra_skip);
 		p_string += start_offset;
+		if (len <= 0)
+		  {
+		      /* zero length - it's a preasumable crafted file intended to crash FreeXL */
+		      return FREEXL_CRAFTED_FILE;
+		  }
 		if (!parse_unicode_string
 		    (workbook->utf16_converter, len, utf16, p_string,
 		     &utf8_string))
@@ -3623,6 +3649,11 @@ parse_biff_record (biff_workbook * workbook, int swap)
 		get_unicode_params (p_string, swap, &start_offset, &utf16,
 				    &extra_skip);
 		p_string += start_offset;
+		if (len <= 0)
+		  {
+		      /* zero length - it's a preasumable crafted file intended to crash FreeXL */
+		      return FREEXL_CRAFTED_FILE;
+		  }
 		if (!parse_unicode_string
 		    (workbook->utf16_converter, len, utf16, p_string,
 		     &utf8_string))
@@ -3904,6 +3935,9 @@ read_mini_biff_next_record (biff_workbook * workbook, int swap, int *errcode)
 /* saving the current record */
     workbook->record_type = record_type.value;
     workbook->record_size = record_size.value;
+
+    if (workbook->record_size >= 8192)
+	return 0;		/* malformed or crafted file */
 
     if ((workbook->p_in - workbook->fat->miniStream) + workbook->record_size >
 	(int) workbook->size)
@@ -4455,7 +4489,12 @@ freexl_get_info (const void *xls_handle, unsigned short what,
 	  *info = FREEXL_UNKNOWN;
 	  if (workbook->biff_obfuscated == 0)
 	      *info = FREEXL_BIFF_PLAIN;
-	  else if (workbook->biff_obfuscated == 0)
+	  /* 2019-01-30 
+	   * issue reported by David Binderman
+	   *  
+	   if (workbook->biff_obfuscated == 0)
+	   */
+	  else if (workbook->biff_obfuscated == 1)
 	      *info = FREEXL_BIFF_OBFUSCATED;
 	  else
 	      *info = workbook->biff_xf_next_index;

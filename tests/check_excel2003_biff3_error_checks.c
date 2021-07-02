@@ -41,13 +41,15 @@
 / the provisions above, a recipient may use your version of this file under
 / the terms of any one of the MPL, the GPL or the LGPL.
 / 
-*/#include <stdlib.h>
+*/
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "freexl.h"
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     const void *handle;
     int ret;
@@ -57,99 +59,143 @@ int main (int argc, char *argv[])
     unsigned int num_rows;
     unsigned short num_columns;
     FreeXL_CellValue cell_value;
-   
+
     ret = freexl_open_info ("testdata/simple2003_3.xls", &handle);
-    if (ret != FREEXL_OK) {
-	fprintf(stderr, "OPEN INFO ERROR: %d\n", ret);
-	return -1;
-    }
+    if (ret != FREEXL_OK)
+      {
+	  fprintf (stderr, "OPEN INFO ERROR: %d\n", ret);
+	  return -1;
+      }
 
-    ret = freexl_get_info(NULL, FREEXL_CFBF_VERSION, &info);
-    if (ret != FREEXL_NULL_HANDLE) {
-	fprintf(stderr, "GET_INFO unexpected ret for CFBF version handle: %d\n", ret);
-	return -3;
-    }
+    ret = freexl_get_info (NULL, FREEXL_CFBF_VERSION, &info);
+    if (ret != FREEXL_NULL_HANDLE)
+      {
+	  fprintf (stderr,
+		   "GET_INFO unexpected ret for CFBF version handle: %d\n",
+		   ret);
+	  return -3;
+      }
 
-    ret = freexl_get_info(handle, FREEXL_CFBF_VERSION, NULL);
-    if (ret != FREEXL_NULL_ARGUMENT) {
-	fprintf(stderr, "GET_INFO unexpected ret for CFBF version info: %d\n", ret);
-	return -4;
-    }
+    ret = freexl_get_info (handle, FREEXL_CFBF_VERSION, NULL);
+    if (ret != FREEXL_NULL_ARGUMENT)
+      {
+	  fprintf (stderr,
+		   "GET_INFO unexpected ret for CFBF version info: %d\n", ret);
+	  return -4;
+      }
 
-    ret = freexl_get_worksheet_name(NULL, 0, &worksheet_name);
-    if (ret != FREEXL_NULL_HANDLE) {
-	fprintf(stderr, "Unexpected result getting worksheet name handle: %d\n", ret);
-	return -5;
-    }
+    ret = freexl_get_worksheet_name (NULL, 0, &worksheet_name);
+    if (ret != FREEXL_NULL_HANDLE)
+      {
+	  fprintf (stderr,
+		   "Unexpected result getting worksheet name handle: %d\n",
+		   ret);
+	  return -5;
+      }
 
-    ret = freexl_get_worksheet_name(handle, 0, NULL);
-    if (ret != FREEXL_NULL_ARGUMENT) {
-	fprintf(stderr, "Unexpected result getting worksheet name string: %d\n", ret);
-	return -6;
-    }
+    ret = freexl_get_worksheet_name (handle, 0, NULL);
+    if (ret != FREEXL_NULL_ARGUMENT)
+      {
+	  fprintf (stderr,
+		   "Unexpected result getting worksheet name string: %d\n",
+		   ret);
+	  return -6;
+      }
 
     ret = freexl_select_active_worksheet (NULL, 0);
-    if (ret != FREEXL_NULL_HANDLE) {
-	fprintf(stderr, "Unexpected result setting active worksheet handle: %d\n", ret);
-	return -7;
-    }
-    
+    if (ret != FREEXL_NULL_HANDLE)
+      {
+	  fprintf (stderr,
+		   "Unexpected result setting active worksheet handle: %d\n",
+		   ret);
+	  return -7;
+      }
+
     ret = freexl_select_active_worksheet (handle, 34);
-    if (ret != FREEXL_BIFF_ILLEGAL_SHEET_INDEX) {
-	fprintf(stderr, "Unexpected result setting active worksheet index: %d\n", ret);
-	return -8;
-    }
+    if (ret != FREEXL_BIFF_ILLEGAL_SHEET_INDEX)
+      {
+	  fprintf (stderr,
+		   "Unexpected result setting active worksheet index: %d\n",
+		   ret);
+	  return -8;
+      }
 
     ret = freexl_get_active_worksheet (NULL, &active_idx);
-    if (ret != FREEXL_NULL_HANDLE) {
-	fprintf(stderr, "Unexpected result getting active worksheet handle: %d\n", ret);
-	return -9;
-    }
+    if (ret != FREEXL_NULL_HANDLE)
+      {
+	  fprintf (stderr,
+		   "Unexpected result getting active worksheet handle: %d\n",
+		   ret);
+	  return -9;
+      }
 
     ret = freexl_get_active_worksheet (handle, NULL);
-    if (ret != FREEXL_NULL_ARGUMENT) {
-	fprintf(stderr, "Unexpected result getting active worksheet arg: %d\n", ret);
-	return -10;
-    }
-    
+    if (ret != FREEXL_NULL_ARGUMENT)
+      {
+	  fprintf (stderr,
+		   "Unexpected result getting active worksheet arg: %d\n", ret);
+	  return -10;
+      }
+
     ret = freexl_worksheet_dimensions (NULL, &num_rows, &num_columns);
-    if (ret != FREEXL_NULL_HANDLE) {
-	fprintf(stderr, "Unexpected result getting worksheet dimensions handle: %d\n", ret);
-	return -12;
-    }
+    if (ret != FREEXL_NULL_HANDLE)
+      {
+	  fprintf (stderr,
+		   "Unexpected result getting worksheet dimensions handle: %d\n",
+		   ret);
+	  return -12;
+      }
     ret = freexl_worksheet_dimensions (handle, NULL, &num_columns);
-    if (ret != FREEXL_NULL_ARGUMENT) {
-	fprintf(stderr, "Unexpected result getting worksheet dimensions row: %d\n", ret);
-	return -13;
-    }
+    if (ret != FREEXL_NULL_ARGUMENT)
+      {
+	  fprintf (stderr,
+		   "Unexpected result getting worksheet dimensions row: %d\n",
+		   ret);
+	  return -13;
+      }
     ret = freexl_worksheet_dimensions (handle, &num_rows, NULL);
-    if (ret != FREEXL_NULL_ARGUMENT) {
-	fprintf(stderr, "Unexpected result getting worksheet dimensions col: %d\n", ret);
-	return -14;
-    }
+    if (ret != FREEXL_NULL_ARGUMENT)
+      {
+	  fprintf (stderr,
+		   "Unexpected result getting worksheet dimensions col: %d\n",
+		   ret);
+	  return -14;
+      }
     ret = freexl_worksheet_dimensions (handle, NULL, NULL);
-    if (ret != FREEXL_NULL_ARGUMENT) {
-	fprintf(stderr, "Unexpected result getting worksheet dimensions both: %d\n", ret);
-	return -15;
-    }
+    if (ret != FREEXL_NULL_ARGUMENT)
+      {
+	  fprintf (stderr,
+		   "Unexpected result getting worksheet dimensions both: %d\n",
+		   ret);
+	  return -15;
+      }
 
     ret = freexl_get_cell_value (NULL, 0, 0, &cell_value);
-    if (ret != FREEXL_NULL_HANDLE) {
-	fprintf(stderr, "Unexpected result getting cell value (0,0) handle: %d\n", ret);
-	return -16;
-    }
+    if (ret != FREEXL_NULL_HANDLE)
+      {
+	  fprintf (stderr,
+		   "Unexpected result getting cell value (0,0) handle: %d\n",
+		   ret);
+	  return -16;
+      }
 
     ret = freexl_get_cell_value (handle, 0, 0, NULL);
-    if (ret != FREEXL_NULL_ARGUMENT) {
-	fprintf(stderr, "Unexpected result getting cell value (0,0) val: %d\n", ret);
-	return -17;
-    }
- 
+    if (ret != FREEXL_NULL_ARGUMENT)
+      {
+	  fprintf (stderr,
+		   "Unexpected result getting cell value (0,0) val: %d\n", ret);
+	  return -17;
+      }
+
     ret = freexl_close (handle);
-    if (ret != FREEXL_OK) {
-	fprintf(stderr, "CLOSE ERROR: %d\n", ret);
-	return -2;
-    }
+    if (ret != FREEXL_OK)
+      {
+	  fprintf (stderr, "CLOSE ERROR: %d\n", ret);
+	  return -2;
+      }
+
+    if (argc > 1 || argv[0] == NULL)
+	argc = 1;		/* silencing stupid compiler warnings */
 
     return 0;
 }

@@ -49,27 +49,34 @@
 
 #include "freexl.h"
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     const void *handle;
     int ret;
 
     ret = freexl_open ("testdata/empty2003.xls", &handle);
-    if (ret != FREEXL_OK) {
-	fprintf (stderr, "OPEN ERROR: %d\n", ret);
-	return -1;
-    }
-    
-    if (!handle) {
-	fprintf (stderr, "Null workbook handle\n");
-	return -3;
-    }
+    if (ret != FREEXL_OK)
+      {
+	  fprintf (stderr, "OPEN ERROR: %d\n", ret);
+	  return -1;
+      }
+
+    if (!handle)
+      {
+	  fprintf (stderr, "Null workbook handle\n");
+	  return -3;
+      }
 
     ret = freexl_close (handle);
-    if (ret != FREEXL_OK) {
-	fprintf (stderr, "CLOSE ERROR: %d\n", ret);
-	return -2;
-    }
+    if (ret != FREEXL_OK)
+      {
+	  fprintf (stderr, "CLOSE ERROR: %d\n", ret);
+	  return -2;
+      }
+
+    if (argc > 1 || argv[0] == NULL)
+	argc = 1;		/* silencing stupid compiler warnings */
 
     return 0;
 }
