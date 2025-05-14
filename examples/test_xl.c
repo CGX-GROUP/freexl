@@ -76,7 +76,7 @@ main (int argc, char *argv[])
       }
     else
       {
-	  fprintf (stderr, "usage: text_xl path.xls [-verbose]\n");
+	  fprintf (stderr, "usage: test_xl path.xls [-verbose]\n");
 	  return -1;
       }
 

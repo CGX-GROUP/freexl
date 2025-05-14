@@ -16,7 +16,9 @@ check_PROGRAMS = open_oocalc95 \
 		walk_sst_oocalc97 \
 		check_datetime_biff8 \
 		check_boolean_biff8 \
-		check_oocalc97_intvalue
+		check_oocalc97_intvalue \
+		check_excel_xlsx \
+		check_calc_ods
 
 AM_CFLAGS = -I@srcdir@/../headers
 AM_LDFLAGS = -L../src -lfreexl -lm $(GCOV_FLAGS)
@@ -40,4 +42,6 @@ EXTRA_DIST = testdata/oocalc_empty95.xls \
        testdata/datetime2003.xls \
        testdata/testcase1.xls \
        testdata/testbool.xls \
+       testdata/test_xml.ods \
+       testdata/test_xml.xlsx \
        test_under_valgrind.sh

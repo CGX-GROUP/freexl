@@ -12,6 +12,9 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
+/* Define to 1 if you have the `expat' library (-lexpat). */
+/* #undef HAVE_LIBEXPAT */
+
 /* Define to 1 if `lstat' has the bug that it succeeds when given the
    zero-length file name argument. */
 /* #undef HAVE_LSTAT_EMPTY_STRING_BUG */
@@ -21,6 +24,9 @@
 
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
+
+/* Define to 1 if you have the <minizip/unzip.h> header file. */
+/* #undef HAVE_MINIZIP_UNZIP_H */
 
 /* Define to 1 if you have the `sqrt' function. */
 /* #undef HAVE_SQRT */
@@ -66,7 +72,7 @@
 #define HAVE_SYS_TYPES_H 1
 
 /* Define to 1 if you have the <unistd.h> header file. */
-#define HAVE_UNISTD_H 1
+/* #undef HAVE_UNISTD_H 1 */
 
 /* Define to 1 if `lstat' dereferences a symlink specified with a trailing
    slash. */
@@ -75,6 +81,9 @@
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
 #define LT_OBJDIR ".libs/"
+
+/* Should be defined in order to disable XML documents support. */
+/* #undef OMIT_XMLDOC */
 
 /* Name of package */
 #define PACKAGE "freexl"
@@ -86,7 +95,7 @@
 #define PACKAGE_NAME "FreeXL"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "FreeXL 1.0.6"
+#define PACKAGE_STRING "FreeXL 2.0.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "freexl"
@@ -95,7 +104,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.0.6"
+#define PACKAGE_VERSION "2.0.0"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -107,7 +116,7 @@
 /* #undef TM_IN_SYS_TIME */
 
 /* Version number of package */
-#define VERSION "1.0.6"
+#define VERSION "2.0.0"
 
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */

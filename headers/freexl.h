@@ -3,7 +3,7 @@
 /
 / public declarations
 /
-/ version  1.0, 2011 July 26
+/ version  2.0, 2021 June 10
 /
 / Author: Sandro Furieri a.furieri@lqt.it
 /
@@ -25,7 +25,7 @@
 /
 / The Initial Developer of the Original Code is Alessandro Furieri
 / 
-/ Portions created by the Initial Developer are Copyright (C) 2011
+/ Portions created by the Initial Developer are Copyright (C) 2011-2021
 / the Initial Developer. All Rights Reserved.
 / 
 / Contributor(s):
@@ -194,7 +194,7 @@ extern "C"
 #define FREEXL_CELL_DOUBLE		103
 /** Cell contains a text value */
 #define FREEXL_CELL_TEXT		104
-/** Cell contains a reference to a Single String Table entry (BIFF8) */
+/** Cell contains a reference to a String */
 #define FREEXL_CELL_SST_TEXT		105
 /** Cell contains a number intended to represent a date */
 #define FREEXL_CELL_DATE		106
@@ -231,10 +231,10 @@ extern "C"
 
 /* Error codes */
 #define FREEXL_OK			0 /**< No error, success */
-#define FREEXL_FILE_NOT_FOUND		-1 /**< .xls file does not exist or is
+#define FREEXL_FILE_NOT_FOUND		-1 /**< .xls or .xlsx file does not exist or is
 						not accessible for reading */
-#define FREEXL_NULL_HANDLE		-2 /**< Null xls_handle argument */
-#define FREEXL_INVALID_HANDLE		-3 /**< Invalid xls_handle argument */
+#define FREEXL_NULL_HANDLE		-2 /**< Null freexl_handle argument */
+#define FREEXL_INVALID_HANDLE		-3 /**< Invalid freexl_handle argument */
 #define FREEXL_INSUFFICIENT_MEMORY	-4 /**< some kind of memory allocation
                                                 failure */
 #define FREEXL_NULL_ARGUMENT		-5 /**< an unexpected null argument */
@@ -296,7 +296,24 @@ extern "C"
                                                  (may be purposely crafted for 
                                                  malicious purposes) has been 
                                                  detected. */
-
+#define FREEXL_INVALID_XLSX			-27 /**< The file doesn't seems to be a
+												valid XLSX document */
+#define FREEXL_XLSX_ILLEGAL_SHEET_INDEX	-28 /**< The requested worksheet is not
+                                                 available in the workbook */
+#define FREEXL_XSLX_UNSELECTED_SHEET	-29 /**< There is no currently active
+                                              worksheet. Possibly a forgotten
+                                              call to 
+                                              freexl_select_active_worksheet() */
+#define FREEXL_XLSX_INVALID_SST		-30 /**< The file contains an invalid
+                                                 Single String Table */
+#define FREEXL_XLSX_ILLEGAL_SST_INDEX	-31 /**< The requested Single String 
+                                                 Table entry is not available */
+#define FREEXL_ODS_ILLEGAL_SHEET_INDEX	-32 /**< The requested worksheet is not
+                                                 available in the workbook */
+#define FREEXL_ODS_UNSELECTED_SHEET	-33 /**< There is no currently active
+                                              worksheet. Possibly a forgotten
+                                              call to 
+                                              freexl_select_active_worksheet() */
 
     /**
      Container for a cell value
@@ -383,7 +400,7 @@ extern "C"
      Open the .xls file, preparing for future functions
      
      \param path full or relative pathname of the input .xls file.
-     \param xls_handle an opaque reference (handle) to be used in each
+     \param freexl_handle an opaque reference (handle) to be used in each
      subsequent function (return value).
 
      \return FREEXL_OK will be returned on success, otherwise any appropriate
@@ -391,8 +408,47 @@ extern "C"
 
      \note You are expected to freexl_close() even on failure, so as to
      correctly release any dynamic memory allocation.
+     
+     \sa freexl_open_xlsx, freexl_open_ods, freexl_open_info, freexl_close.
      */
-    FREEXL_DECLARE int freexl_open (const char *path, const void **xls_handle);
+    FREEXL_DECLARE int freexl_open (const char *path,
+				    const void **freexl_handle);
+
+    /**
+     Open the .xlsx file, preparing for future functions
+     
+     \param path full or relative pathname of the input .xlsx file.
+     \param freexl_handle an opaque reference (handle) to be used in each
+     subsequent function (return value).
+
+     \return FREEXL_OK will be returned on success, otherwise any appropriate
+     error code on failure.
+
+     \note You are expected to freexl_close() even on failure, so as to
+     correctly release any dynamic memory allocation.
+     
+     \sa freexl_open, freexl_open_ods, freexl_close.
+     */
+    FREEXL_DECLARE int freexl_open_xlsx (const char *path,
+					 const void **freexl_handle);
+
+    /**
+     Open the .ods file, preparing for future functions
+     
+     \param path full or relative pathname of the input .ods file.
+     \param freexl_handle an opaque reference (handle) to be used in each
+     subsequent function (return value).
+
+     \return FREEXL_OK will be returned on success, otherwise any appropriate
+     error code on failure.
+
+     \note You are expected to freexl_close() even on failure, so as to
+     correctly release any dynamic memory allocation.
+     
+     \sa freexl_open, freexl_open_xlsx, freexl_close.
+     */
+    FREEXL_DECLARE int freexl_open_ods (const char *path,
+					const void **freexl_handle);
 
     /**
      Open the .xls file for metadata query only
@@ -402,7 +458,7 @@ extern "C"
      for cell values. 
      
      \param path full or relative pathname of the input .xls file.
-     \param xls_handle an opaque reference (handle) to be used in each
+     \param freexl_handle an opaque reference (handle) to be used in each
      subsequent function (return value).
 
      \return FREEXL_OK will be returned on success, otherwise any appropriate
@@ -410,26 +466,75 @@ extern "C"
 
      \note You are expected to freexl_close() even on failure, so as to
      correctly release any dynamic memory allocation.
+     
+     \sa freexl_open, freexl_close, freexl_close_xls
      */
     FREEXL_DECLARE int freexl_open_info (const char *path,
-					 const void **xls_handle);
+					 const void **freexl_handle);
 
     /** 
-     Close the .xls file and releasing any allocated resource
+     Closing the FREEXL file and releasing any allocated resource
 
-    \param xls_handle the handle previously returned by freexl_open()
+    \param freexl_handle the handle previously returned by freexl_open(),
+    freexl_open_xlsx() or freexl_open_ods()
 
     \return FREEXL_OK will be returned on success
     
-    \note After calling freexl_close() any related resource will be released,
-    and the handle will no longer be valid.
+    \note this function is just a convenience method that will automatically
+    dispatch freexl_close_xls() or freexl_close_xlsx() or even freexl_close_ods() 
+    accordingly to the actual type of the passed handle.
+     
+    \sa freexl_close_xls, freexl_close_xlsx, freexl_close_ods
     */
-    FREEXL_DECLARE int freexl_close (const void *xls_handle);
+    FREEXL_DECLARE int freexl_close (const void *freexl_handle);
+
+    /** 
+     Closing the XLS file and releasing any allocated resource
+
+    \param freexl_handle the handle previously returned by freexl_open()
+
+    \return FREEXL_OK will be returned on success
+    
+    \note After calling freexl_close_xls() any related resource will be released,
+    and the handle will no longer be valid.
+    * 
+    \sa freexl_close, freexl_close_xlsx, freexl_close_ods
+    */
+    FREEXL_DECLARE int freexl_close_xls (const void *freexl_handle);
+
+    /** 
+     Closing the XLSX file and releasing any allocated resource
+
+    \param freexl_handle the handle previously returned by freexl_open_xlsx()
+
+    \return FREEXL_OK will be returned on success
+    
+    \note After calling freexl_close_xlsx() any related resource will be released,
+    and the handle will no longer be valid.
+    * 
+    \sa freexl_close, freexl_close_xls, freexl_close_ods
+    */
+    FREEXL_DECLARE int freexl_close_xlsx (const void *freexl_handle);
+
+    /** 
+     Closing the ODS file and releasing any allocated resource
+
+    \param freexl_handle the handle previously returned by freexl_open_ods()
+
+    \return FREEXL_OK will be returned on success
+    
+    \note After calling freexl_close_ods() any related resource will be released,
+    and the handle will no longer be valid.
+    * 
+    \sa freexl_close, freexl_close_xls, freexl_close_xlsx
+    */
+    FREEXL_DECLARE int freexl_close_ods (const void *freexl_handle);
 
     /**
-     Query general information about the Workbook and Worksheets
+     Query general information about the Workbook and Worksheets - XLS
 
-     \param xls_handle the handle previously returned by freexl_open()
+     \param freexl_handle the handle previously returned by freexl_open()
+     or freexl_open_info()
      \param what the info to be queried.
      \param info the corresponding information value (return value)
      
@@ -460,21 +565,53 @@ extern "C"
     Table entries)
     - FREEXL_BIFF_FORMAT_COUNT (returning the total number of format entries)
     - FREEXL_BIFF_XF_COUNT (returning the number of extended format entries)
+     
+    \note will only work when the handle if of the XLS type.
     */
-    FREEXL_DECLARE int freexl_get_info (const void *xls_handle,
+    FREEXL_DECLARE int freexl_get_info (const void *freexl_handle,
 					unsigned short what,
 					unsigned int *info);
 
     /**
+     Querying how many Single Strings are in the Workbook
+
+     \param freexl_handle the handle previously returned by freexl_open()
+     or freexl_open_xlsx but not by freexl_open_ods()
+     \param info the corresponding information value (return value)
+     
+     \note FREEXL_UNKNOWN will be returned in \p info if the information is 
+     not available, not appropriate or not supported for the file type.
+     
+     \return FREEXL_OK will be returned on success
+    */
+    FREEXL_DECLARE int freexl_get_strings_count (const void *freexl_handle,
+						 unsigned int *info);
+
+    /**
+     Querying how many Worksheets are in the Workbook
+
+     \param freexl_handle the handle previously returned by freexl_open()
+     or freexl_open_xlsx or either freexl_open_ods()
+     \param info the corresponding information value (return value)
+     
+     \note FREEXL_UNKNOWN will be returned in \p info if the information is 
+     not available, not appropriate or not supported for the file type.
+     
+     \return FREEXL_OK will be returned on success
+    */
+    FREEXL_DECLARE int freexl_get_worksheets_count (const void *freexl_handle,
+						    unsigned int *info);
+
+    /**
      Query worksheet name
 
-    \param xls_handle the handle previously returned by freexl_open()
+    \param freexl_handle the handle previously returned by freexl_open()
     \param sheet_index the index identifying the worksheet (base 0)
     \param string the name of the worksheet (return value)
     
     \return FREEXL_OK will be returned on success
     */
-    FREEXL_DECLARE int freexl_get_worksheet_name (const void *xls_handle,
+    FREEXL_DECLARE int freexl_get_worksheet_name (const void *freexl_handle,
 						  unsigned short sheet_index,
 						  const char **string);
 
@@ -484,27 +621,28 @@ extern "C"
      Within a FreeXL handle, only one worksheet can be active at a time.
      Functions that fetch data are implictly working on the selected worksheet.
 
-     \param xls_handle the handle previously returned by freexl_open()
+     \param freexl_handle the handle previously returned by freexl_open()
      \param sheet_index the index identifying the worksheet (base 0)
      
      \return FREEXL_OK will be returned on success
      */
-    FREEXL_DECLARE int freexl_select_active_worksheet (const void *xls_handle,
+    FREEXL_DECLARE int freexl_select_active_worksheet (const void
+						       *freexl_handle,
 						       unsigned short
 						       sheet_index);
 
     /**
      Query the currently active worksheet index
      
-     \param xls_handle the handle previously returned by freexl_open()
+     \param freexl_handle the handle previously returned by freexl_open()
      \param sheet_index the index corresponding to the currently active
      Worksheet (return value)
      
      \return FREEXL_OK will be returned on success
      
-     \sa freexl_select_active_worksheet() for how to select the worksheet
+     \sa freexl_select_active_worksheet for how to select the worksheet
     */
-    FREEXL_DECLARE int freexl_get_active_worksheet (const void *xls_handle,
+    FREEXL_DECLARE int freexl_get_active_worksheet (const void *freexl_handle,
 						    unsigned short
 						    *sheet_index);
 
@@ -514,7 +652,7 @@ extern "C"
      This function returns the number of rows and columns for the currently
      selected worksheet. 
 
-     \param xls_handle the handle previously returned by freexl_open()
+     \param freexl_handle the handle previously returned by freexl_open()
      \param rows the total row count (return value)
      \param columns the total column count (return value)
 
@@ -525,14 +663,14 @@ extern "C"
      top left corner to B4 in the bottom right corner), this will return rows
      equal to 1 and columns equal to 3). This is to support C style looping.
      */
-    FREEXL_DECLARE int freexl_worksheet_dimensions (const void *xls_handle,
+    FREEXL_DECLARE int freexl_worksheet_dimensions (const void *freexl_handle,
 						    unsigned int *rows,
 						    unsigned short *columns);
 
     /**
      Retrieve string entries from SST
      
-     \param xls_handle the handle previously returned by freexl_open()
+     \param freexl_handle the handle previously returned by freexl_open()
      \param string_index the index identifying the String entry (base 0).
      \param string the corresponding String value (return value)
      
@@ -543,14 +681,14 @@ extern "C"
      debugging purposes.
      
     */
-    FREEXL_DECLARE int freexl_get_SST_string (const void *xls_handle,
+    FREEXL_DECLARE int freexl_get_SST_string (const void *freexl_handle,
 					      unsigned short string_index,
 					      const char **string);
 
     /**
      Retrieve FAT entries from FAT chain
 
-     \param xls_handle the handle previously returned by freexl_open()
+     \param feexl_handle the handle previously returned by freexl_open()
      \param sector_index the index identifying the Sector entry (base 0).
      \param next_sector_index the index identifying the next Sector to be
      accessed in logical order (return value).
@@ -568,21 +706,21 @@ extern "C"
      debugging purposes.
      
      */
-    FREEXL_DECLARE int freexl_get_FAT_entry (const void *xls_handle,
+    FREEXL_DECLARE int freexl_get_FAT_entry (const void *freexl_handle,
 					     unsigned int sector_index,
 					     unsigned int *next_sector_index);
 
     /**
      Retrieve individual cell values from the currently active worksheet 
 
-     \param xls_handle the handle previously returned by freexl_open()
+     \param freexl_handle the handle previously returned by freexl_open()
      \param row row number of the cell to query (zero base)
      \param column column number of the cell to query (zero base)
      \param value the cell type and value (return value)
 
      \return FREEXL_OK will be returned on success
     */
-    FREEXL_DECLARE int freexl_get_cell_value (const void *xls_handle,
+    FREEXL_DECLARE int freexl_get_cell_value (const void *freexl_handle,
 					      unsigned int row,
 					      unsigned short column,
 					      FreeXL_CellValue * value);

@@ -3,7 +3,7 @@
 /
 / internal declarations
 /
-/ version  1.0, 2011 July 26
+/ version  1.0, 2.0, 2021 June 10
 /
 / Author: Sandro Furieri a.furieri@lqt.it
 /
@@ -25,7 +25,7 @@
 /
 / The Initial Developer of the Original Code is Alessandro Furieri
 / 
-/ Portions created by the Initial Developer are Copyright (C) 2011
+/ Portions created by the Initial Developer are Copyright (C) 2011-2021
 / the Initial Developer. All Rights Reserved.
 / 
 / Contributor(s):
@@ -82,6 +82,29 @@
 #define BIFF_MULRK		0x00BD
 #define BIFF_BOOLERR_2	0x0005
 #define BIFF_BOOLERR	0x0205
+
+/* XLSX data types */
+#define XLSX_NULL		1
+#define XLSX_INTEGER	2
+#define XLSX_DOUBLE		3
+#define XLSX_STR_INDEX	4
+#define XLSX_DATETIME	5
+
+#define XLSX_DATE_NONE		0
+#define XLSX_DATE_SIMPLE	1
+#define XLSX_TIME_SIMPLE	2
+#define XLSX_DATE_AND_TIME	3
+
+/* ODS data types */
+#define ODS_VOID		1
+#define ODS_FLOAT		2
+#define ODS_CURRENCY	3
+#define ODS_PERCENTAGE	4
+#define ODS_BOOLEAN		5
+#define ODS_DATE		6
+#define ODS_TIME		7
+#define ODS_STRING		8
+#define ODS_INTEGER		9
 
 typedef union biff_word
 {
@@ -290,3 +313,173 @@ typedef struct biff_workbook_struct
     unsigned short biff_xf_next_index;	/* next XF index */
     int magic2;			/* magic signature #2 */
 } biff_workbook;
+
+typedef struct xlsx_cell_struct
+{
+/* a struct representing a XLSX cell */
+    int col_no;
+    int type;
+    int is_datetime;
+    int assigned;
+    int int_value;
+    double dbl_value;
+    int str_index;
+    struct xlsx_cell_struct *next;
+} xlsx_cell;
+
+typedef struct xlsx_row_struct
+{
+/* a struct representing a XLSX row of cells */
+    int row_no;
+    int max_cell;
+    xlsx_cell *first;
+    xlsx_cell *last;
+    struct xlsx_row_struct *next;
+} xlsx_row;
+
+typedef struct xlsx_worksheet_struct
+{
+/* a struct representing a XLSX Worksheet */
+    int id;
+    char *name;
+    xlsx_row *first;
+    xlsx_row *last;
+    int max_row;
+    int max_cell;
+    xlsx_row **rows;
+    int error;
+    char *CharData;
+    int CharDataLen;
+    int CharDataMax;
+    int CharDataStep;
+    int RowOk;
+    int ColOk;
+    int CellValueOk;
+    struct xlsx_workbook_struct *wbRef;
+    struct xlsx_worksheet_struct *next;
+} xlsx_worksheet;
+
+typedef struct xlsx_format_struct
+{
+/* a struct representing a XLSX format */
+    int fmtId;
+    int is_datetime;
+} xlsx_format;
+
+typedef struct xlsx_style_struct
+{
+/* a struct representing a XLSX Cell Style */
+    int stlId;
+    xlsx_format *formatRef;
+} xlsx_style;
+
+typedef struct xml_datetime_struct
+{
+/* a struct intended to store a block of DataTime strings */
+#define MAX_DATETIME_STR	128
+#define STR_DATETIME_LEN	20
+    char datetime[MAX_DATETIME_STR][STR_DATETIME_LEN];
+    int next_str;
+    struct xml_datetime_struct *next;
+} xml_datetime;
+
+typedef struct xlsx_workbook_struct
+{
+/* a struct representing a XLSX Workbook */
+    xlsx_worksheet *first;
+    xlsx_worksheet *last;
+    xlsx_worksheet *active_sheet;	/* currently active SHEET */
+    int n_strings;
+    int xml_strings;
+    char **strings;
+    int n_formats;
+    int next_format;
+    xlsx_format *formats;
+    int n_styles;
+    int next_style;
+    xlsx_style *styles;
+    xml_datetime *first_date;
+    xml_datetime *last_date;
+    int error;
+    char *SharedStringsZipEntry;
+    char *WorkbookZipEntry;
+    char *StylesZipEntry;
+    char *CharData;
+    int CharDataLen;
+    int CharDataMax;
+    int CharDataStep;
+    int SharedStringsOk;
+    int WorksheetsOk;
+    int StylesOk;
+    int FormatsOk;
+    int CellStylesOk;
+} xlsx_workbook;
+
+typedef struct ods_cell_struct
+{
+/* a struct representing an ODS cell */
+    int col_no;
+    int type;
+    int assigned;
+    int int_value;
+    double dbl_value;
+    char *txt_value;
+    struct ods_cell_struct *next;
+} ods_cell;
+
+typedef struct ods_row_struct
+{
+/* a struct representing an ODS row of cells */
+    int row_no;
+    int max_cell;
+    ods_cell *first;
+    ods_cell *last;
+    int NextColNo;
+    struct ods_row_struct *next;
+} ods_row;
+
+typedef struct ods_worksheet_struct
+{
+/* a struct representing an ODS Worksheet */
+    int id;
+    char *name;
+    int n_columns;
+    ods_row *first;
+    ods_row *last;
+    int max_row;
+    int max_cell;
+    ods_row **rows;
+    int RowOk;
+    int ColOk;
+    int CellValueOk;
+    int NextRowNo;
+    struct ods_worksheet_struct *next;
+} ods_worksheet;
+
+typedef struct ods_workbook_struct
+{
+/* a struct representing an ODS Workbook */
+    ods_worksheet *first;
+    ods_worksheet *last;
+    ods_worksheet *active_sheet;	/* currently active SHEET */
+    xml_datetime *first_date;
+    xml_datetime *last_date;
+    int error;
+    char *ContentZipEntry;
+    char *CharData;
+    int CharDataLen;
+    int CharDataMax;
+    int CharDataStep;
+    int ContentOk;
+    int NextWorksheetId;
+} ods_workbook;
+
+typedef struct freexl_handle_struct
+{
+/* 
+ * a generic handle to an XLS or XLSX or ODS spreadsheet
+ */
+    biff_workbook *xls_handle;
+    xlsx_workbook *xlsx_handle;
+    ods_workbook *ods_handle;
+} freexl_handle;

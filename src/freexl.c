@@ -3,7 +3,7 @@
 /
 / FreeXL implementation
 /
-/ version  1.0, 2011 July 26
+/ version  2.0, 2021 June 10
 /
 / Author: Sandro Furieri a.furieri@lqt.it
 /
@@ -25,7 +25,7 @@
 /
 / The Initial Developer of the Original Code is Alessandro Furieri
 / 
-/ Portions created by the Initial Developer are Copyright (C) 2011
+/ Portions created by the Initial Developer are Copyright (C) 2011-2020
 / the Initial Developer. All Rights Reserved.
 / 
 / Contributor(s):
@@ -295,7 +295,7 @@ convert_to_utf8 (iconv_t converter, const char *buf, int buflen, int *err)
 	  *err = FREEXL_UNSUPPORTED_CHARSET;
 	  return NULL;
       }
-    utf8buf = malloc (maxlen);
+    utf8buf = malloc (maxlen + 1);
     len = buflen;
     utf8len = maxlen;
     pBuf = (char *) buf;
@@ -1807,7 +1807,7 @@ parse_SST (biff_workbook * workbook, int swap)
 		      for (i = 0; i < len; i++)
 			{
 			    if (p_string - workbook->record >=
-				(int)workbook->record_size)
+				(int) workbook->record_size)
 			      {
 				  /* buffer overflow: it's a preasumable crafted file intended to crash FreeXL */
 				  return FREEXL_CRAFTED_FILE;
@@ -1828,7 +1828,7 @@ parse_SST (biff_workbook * workbook, int swap)
 
 		/* skipping extra data (if any) */
 		p_string += utf16_skip;
-		if (p_string - workbook->record >= (int)workbook->record_size)
+		if (p_string - workbook->record >= (int) workbook->record_size)
 		    next_skip =
 			(p_string - workbook->record) - workbook->record_size;
 		else
@@ -1923,11 +1923,6 @@ parse_SST (biff_workbook * workbook, int swap)
 		return FREEXL_OK;
 	    }
 
-	  if (len <= 0)
-	    {
-		/* zero length - it's a preasumable crafted file intended to crash FreeXL */
-		return FREEXL_CRAFTED_FILE;
-	    }
 	  if (!parse_unicode_string
 	      (workbook->utf16_converter, len, utf16, p_string, &utf8_string))
 	      return FREEXL_INVALID_CHARACTER;
@@ -1939,7 +1934,7 @@ parse_SST (biff_workbook * workbook, int swap)
 	      p_string += len * 2;
 	  /* skipping extra data (if any) */
 	  p_string += workbook->shared_strings.current_utf16_skip;
-	  if (p_string - workbook->record >= (int)workbook->record_size)
+	  if (p_string - workbook->record >= (int) workbook->record_size)
 	      next_skip = (p_string - workbook->record) - workbook->record_size;
 	  else
 	      next_skip = 0;
@@ -2795,7 +2790,8 @@ read_legacy_biff (biff_workbook * workbook, int swap)
 		      else if (is_datetime)
 			  ret =
 			      set_datetime_double_value (workbook, row, col,
-							 workbook->biff_date_mode,
+							 workbook->
+							 biff_date_mode,
 							 dbl_value);
 		      else if (is_time)
 			  ret =
@@ -3570,7 +3566,8 @@ parse_biff_record (biff_workbook * workbook, int swap)
 		      else if (is_datetime)
 			  ret =
 			      set_datetime_double_value (workbook, row, col,
-							 workbook->biff_date_mode,
+							 workbook->
+							 biff_date_mode,
 							 dbl_value);
 		      else if (is_time)
 			  ret =
@@ -4085,9 +4082,9 @@ check_little_endian_arch ()
 }
 
 static int
-common_open (const char *path, const void **xls_handle, int magic)
+common_open_xls (const char *path, freexl_handle ** handle, int magic)
 {
-/* opening and initializing the Workbook */
+/* opening and initializing the Workbook - XLS */
     biff_workbook *workbook;
     biff_sheet *p_sheet;
     fat_chain *chain = NULL;
@@ -4095,12 +4092,15 @@ common_open (const char *path, const void **xls_handle, int magic)
     int ret;
     int swap = check_little_endian_arch ();
 
-    *xls_handle = NULL;
+    *handle = malloc (sizeof (freexl_handle));
+    (*handle)->xls_handle = NULL;
+    (*handle)->xlsx_handle = NULL;
+    (*handle)->ods_handle = NULL;
 /* allocating the Workbook struct */
     workbook = alloc_workbook (magic);
     if (!workbook)
 	return FREEXL_INSUFFICIENT_MEMORY;
-    *xls_handle = workbook;
+    (*handle)->xls_handle = workbook;
 
     workbook->xls = fopen (path, "rb");
     if (workbook->xls == NULL)
@@ -4254,29 +4254,38 @@ common_open (const char *path, const void **xls_handle, int magic)
 	destroy_fat_chain (chain);
     if (workbook)
 	destroy_workbook (workbook);
-    *xls_handle = NULL;
+    (*handle)->xls_handle = NULL;
     return errcode;
 }
 
 FREEXL_DECLARE int
-freexl_open (const char *path, const void **xls_handle)
+freexl_open (const char *path, const void **xl_handle)
 {
-/* opening and initializing the Workbook */
-    return common_open (path, xls_handle, FREEXL_MAGIC_START);
+/* opening and initializing the Workbook - XLS format expected */
+    freexl_handle **handle = (freexl_handle **) xl_handle;
+    return common_open_xls (path, handle, FREEXL_MAGIC_START);
 }
 
 FREEXL_DECLARE int
-freexl_open_info (const char *path, const void **xls_handle)
+freexl_open_info (const char *path, const void **xl_handle)
 {
 /* opening and initializing the Workbook (only for Info) */
-    return common_open (path, xls_handle, FREEXL_MAGIC_INFO);
+    freexl_handle **handle = (freexl_handle **) xl_handle;
+    return common_open_xls (path, handle, FREEXL_MAGIC_INFO);
 }
 
 FREEXL_DECLARE int
-freexl_close (const void *xls_handle)
+freexl_close_xls (const void *xl_handle)
 {
 /* attempting to destroy the Workbook */
-    biff_workbook *workbook = (biff_workbook *) xls_handle;
+    freexl_handle *handle = (freexl_handle *) xl_handle;
+    biff_workbook *workbook;
+    if (!handle)
+	return FREEXL_NULL_HANDLE;
+    if (handle->xls_handle == NULL)
+	return FREEXL_INVALID_HANDLE;
+
+    workbook = handle->xls_handle;
     if (!workbook)
 	return FREEXL_NULL_HANDLE;
     if ((workbook->magic1 == FREEXL_MAGIC_INFO
@@ -4288,16 +4297,87 @@ freexl_close (const void *xls_handle)
 
 /* destroying the workbook */
     destroy_workbook (workbook);
+/* destroying the handle */
+    free (handle);
 
     return FREEXL_OK;
 }
 
 FREEXL_DECLARE int
-freexl_get_info (const void *xls_handle, unsigned short what,
-		 unsigned int *info)
+freexl_close (const void *xl_handle)
+{
+/* attempting to destroy the Workbook */
+    freexl_handle *handle = (freexl_handle *) xl_handle;
+    if (!handle)
+	return FREEXL_NULL_HANDLE;
+
+    if (handle->xls_handle != NULL)
+      {
+	  /* seems to be a XLS */
+	  return freexl_close_xls (xl_handle);
+      }
+
+#ifndef OMIT_XMLDOC		/* only if XML support is enabled */
+    if (handle->xlsx_handle != NULL)
+      {
+	  /* seems to be a XLSX */
+	  return freexl_close_xlsx (xl_handle);
+      }
+    if (handle->ods_handle != NULL)
+      {
+	  /* seems to be an ODS */
+	  return freexl_close_ods (xl_handle);
+      }
+#endif /* end conditional XML support */
+
+    return FREEXL_INVALID_HANDLE;
+}
+
+static int
+count_worksheets_xlsx (xlsx_workbook * wb)
+{
+/* counting how many Worksheets in a WorkBook - XLSX */
+    int count = 0;
+    xlsx_worksheet *ws;
+    if (wb == NULL)
+	return 0;
+
+    ws = wb->first;
+    while (ws != NULL)
+      {
+	  count++;
+	  ws = ws->next;
+      }
+    return count;
+}
+
+static int
+count_worksheets_ods (ods_workbook * wb)
+{
+/* counting how many Worksheets in a WorkBook - ODS */
+    int count = 0;
+    ods_worksheet *ws;
+    if (wb == NULL)
+	return 0;
+
+    ws = wb->first;
+    while (ws != NULL)
+      {
+	  count++;
+	  ws = ws->next;
+      }
+    return count;
+}
+
+FREEXL_DECLARE int
+freexl_get_info (const void *xl_handle, unsigned short what, unsigned int *info)
 {
 /* attempting to retrieve some info */
-    biff_workbook *workbook = (biff_workbook *) xls_handle;
+    freexl_handle *handle = (freexl_handle *) xl_handle;
+    biff_workbook *workbook;
+    if (!handle)
+	return FREEXL_NULL_HANDLE;
+    workbook = handle->xls_handle;
     if (!workbook)
 	return FREEXL_NULL_HANDLE;
     if (!info)
@@ -4504,13 +4584,112 @@ freexl_get_info (const void *xls_handle, unsigned short what,
     return FREEXL_INVALID_INFO_ARG;
 }
 
+static int
+get_strings_xlsx (xlsx_workbook * workbook, unsigned int *info)
+{
+/* XLSX: attempting to retrieve the Single Strings count */
+    if (!workbook)
+	return FREEXL_INVALID_HANDLE;
+    if (!info)
+	return FREEXL_NULL_ARGUMENT;
+
+    *info = workbook->n_strings;
+    return FREEXL_OK;
+}
+
 FREEXL_DECLARE int
-freexl_get_FAT_entry (const void *xls_handle, unsigned int sector_index,
+freexl_get_strings_count (const void *xl_handle, unsigned int *info)
+{
+/* attempting to retrieve the Single Strings count */
+    freexl_handle *handle = (freexl_handle *) xl_handle;
+    biff_workbook *workbook;
+    if (!handle)
+	return FREEXL_NULL_HANDLE;
+    if (handle->xlsx_handle != NULL)
+	return get_strings_xlsx (handle->xlsx_handle, info);
+    if (handle->ods_handle != NULL)
+	return FREEXL_INVALID_HANDLE;
+    workbook = handle->xls_handle;
+    if (!workbook)
+	return FREEXL_NULL_HANDLE;
+    if (!info)
+	return FREEXL_NULL_ARGUMENT;
+    if ((workbook->magic1 == FREEXL_MAGIC_INFO
+	 || workbook->magic1 == FREEXL_MAGIC_START)
+	&& workbook->magic2 == FREEXL_MAGIC_END)
+	;
+    else
+	return FREEXL_INVALID_HANDLE;
+
+    *info = workbook->shared_strings.string_count;
+    return FREEXL_OK;
+}
+
+static int
+get_worksheets_xlsx (xlsx_workbook * workbook, unsigned int *info)
+{
+/* XLSX: attempting to retrieve the Worksheets count */
+    if (!workbook)
+	return FREEXL_INVALID_HANDLE;
+    if (!info)
+	return FREEXL_NULL_ARGUMENT;
+
+    *info = count_worksheets_xlsx (workbook);
+    return FREEXL_OK;
+}
+
+static int
+get_worksheets_ods (ods_workbook * workbook, unsigned int *info)
+{
+/* ODS: attempting to retrieve the Worksheets count */
+    if (!workbook)
+	return FREEXL_INVALID_HANDLE;
+    if (!info)
+	return FREEXL_NULL_ARGUMENT;
+
+    *info = count_worksheets_ods (workbook);
+    return FREEXL_OK;
+}
+
+FREEXL_DECLARE int
+freexl_get_worksheets_count (const void *xl_handle, unsigned int *info)
+{
+/* attempting to retrieve the Worksheets count */
+    freexl_handle *handle = (freexl_handle *) xl_handle;
+    biff_workbook *workbook;
+    if (!handle)
+	return FREEXL_NULL_HANDLE;
+    if (handle->xlsx_handle != NULL)
+	return get_worksheets_xlsx (handle->xlsx_handle, info);
+    if (handle->ods_handle != NULL)
+	return get_worksheets_ods (handle->ods_handle, info);
+    workbook = handle->xls_handle;
+    if (!workbook)
+	return FREEXL_NULL_HANDLE;
+    if (!info)
+	return FREEXL_NULL_ARGUMENT;
+    if ((workbook->magic1 == FREEXL_MAGIC_INFO
+	 || workbook->magic1 == FREEXL_MAGIC_START)
+	&& workbook->magic2 == FREEXL_MAGIC_END)
+	;
+    else
+	return FREEXL_INVALID_HANDLE;
+
+    *info = get_worksheet_count (workbook);
+    return FREEXL_OK;
+}
+
+FREEXL_DECLARE int
+freexl_get_FAT_entry (const void *xl_handle, unsigned int sector_index,
 		      unsigned int *next_sector_index)
 {
 /* attempting to retrieve some FAT entry [by index] */
     fat_entry *entry;
-    biff_workbook *workbook = (biff_workbook *) xls_handle;
+    freexl_handle *handle = (freexl_handle *) xl_handle;
+    biff_workbook *workbook;
+    if (!handle)
+	return FREEXL_NULL_HANDLE;
+    workbook = handle->xls_handle;
     if (!workbook)
 	return FREEXL_NULL_HANDLE;
     if (!next_sector_index)
@@ -4534,14 +4713,76 @@ freexl_get_FAT_entry (const void *xls_handle, unsigned int sector_index,
 
 }
 
+static int
+get_worksheet_name_xlsx (xlsx_workbook * workbook,
+			 unsigned short worksheet_index, const char **string)
+{
+/* XLSX: attempting to retrieve some Worksheet name [by index] */
+    unsigned int count = 0;
+    xlsx_worksheet *worksheet;
+    if (!workbook)
+	return FREEXL_NULL_HANDLE;
+    if (!string)
+	return FREEXL_NULL_ARGUMENT;
+
+    worksheet = workbook->first;
+    while (worksheet)
+      {
+	  if (count == worksheet_index)
+	    {
+		*string = worksheet->name;
+		return FREEXL_OK;
+	    }
+	  count++;
+	  worksheet = worksheet->next;
+      }
+    return FREEXL_XLSX_ILLEGAL_SHEET_INDEX;
+}
+
+static int
+get_worksheet_name_ods (ods_workbook * workbook,
+			unsigned short worksheet_index, const char **string)
+{
+/* ODS: attempting to retrieve some Worksheet name [by index] */
+    unsigned int count = 0;
+    ods_worksheet *worksheet;
+    if (!workbook)
+	return FREEXL_NULL_HANDLE;
+    if (!string)
+	return FREEXL_NULL_ARGUMENT;
+
+    worksheet = workbook->first;
+    while (worksheet)
+      {
+	  if (count == worksheet_index)
+	    {
+		*string = worksheet->name;
+		return FREEXL_OK;
+	    }
+	  count++;
+	  worksheet = worksheet->next;
+      }
+    return FREEXL_ODS_ILLEGAL_SHEET_INDEX;
+}
+
 FREEXL_DECLARE int
-freexl_get_worksheet_name (const void *xls_handle,
+freexl_get_worksheet_name (const void *xl_handle,
 			   unsigned short worksheet_index, const char **string)
 {
 /* attempting to retrieve some Worksheet name [by index] */
     unsigned int count = 0;
     biff_sheet *worksheet;
-    biff_workbook *workbook = (biff_workbook *) xls_handle;
+    freexl_handle *handle = (freexl_handle *) xl_handle;
+    biff_workbook *workbook;
+    if (!handle)
+	return FREEXL_NULL_HANDLE;
+    if (handle->xlsx_handle != NULL)
+	return get_worksheet_name_xlsx (handle->xlsx_handle, worksheet_index,
+					string);
+    if (handle->ods_handle != NULL)
+	return get_worksheet_name_ods (handle->ods_handle, worksheet_index,
+				       string);
+    workbook = handle->xls_handle;
     if (!workbook)
 	return FREEXL_NULL_HANDLE;
     if (!string)
@@ -4567,14 +4808,72 @@ freexl_get_worksheet_name (const void *xls_handle,
     return FREEXL_BIFF_ILLEGAL_SHEET_INDEX;
 }
 
+static int
+select_active_worksheet_xlsx (xlsx_workbook * workbook,
+			      unsigned short worksheet_index)
+{
+/* XLSX: selecting the currently active worksheet [by index] */
+    unsigned int count = 0;
+    xlsx_worksheet *worksheet;
+    if (!workbook)
+	return FREEXL_NULL_HANDLE;
+
+    worksheet = workbook->first;
+    while (worksheet)
+      {
+	  if (count == worksheet_index)
+	    {
+		workbook->active_sheet = worksheet;
+		return FREEXL_OK;
+	    }
+	  count++;
+	  worksheet = worksheet->next;
+      }
+    return FREEXL_XLSX_ILLEGAL_SHEET_INDEX;
+}
+
+static int
+select_active_worksheet_ods (ods_workbook * workbook,
+			     unsigned short worksheet_index)
+{
+/* ODS: selecting the currently active worksheet [by index] */
+    unsigned int count = 0;
+    ods_worksheet *worksheet;
+    if (!workbook)
+	return FREEXL_NULL_HANDLE;
+
+    worksheet = workbook->first;
+    while (worksheet)
+      {
+	  if (count == worksheet_index)
+	    {
+		workbook->active_sheet = worksheet;
+		return FREEXL_OK;
+	    }
+	  count++;
+	  worksheet = worksheet->next;
+      }
+    return FREEXL_ODS_ILLEGAL_SHEET_INDEX;
+}
+
 FREEXL_DECLARE int
-freexl_select_active_worksheet (const void *xls_handle,
+freexl_select_active_worksheet (const void *xl_handle,
 				unsigned short worksheet_index)
 {
 /* selecting the currently active worksheet [by index] */
     unsigned int count = 0;
     biff_sheet *worksheet;
-    biff_workbook *workbook = (biff_workbook *) xls_handle;
+    freexl_handle *handle = (freexl_handle *) xl_handle;
+    biff_workbook *workbook;
+    if (!handle)
+	return FREEXL_NULL_HANDLE;
+    if (handle->xlsx_handle != NULL)
+	return select_active_worksheet_xlsx (handle->xlsx_handle,
+					     worksheet_index);
+    if (handle->ods_handle != NULL)
+	return select_active_worksheet_ods (handle->ods_handle,
+					    worksheet_index);
+    workbook = handle->xls_handle;
     if (!workbook)
 	return FREEXL_NULL_HANDLE;
     if ((workbook->magic1 == FREEXL_MAGIC_INFO
@@ -4598,14 +4897,70 @@ freexl_select_active_worksheet (const void *xls_handle,
     return FREEXL_BIFF_ILLEGAL_SHEET_INDEX;
 }
 
+static int
+get_active_worksheet_xlsx (xlsx_workbook * workbook,
+			   unsigned short *worksheet_index)
+{
+/* XLSX: retrieving the currently active worksheet index */
+    unsigned int count = 0;
+    xlsx_worksheet *worksheet;
+    if (!workbook)
+	return FREEXL_NULL_HANDLE;
+
+    worksheet = workbook->first;
+    while (worksheet)
+      {
+	  if (workbook->active_sheet == worksheet)
+	    {
+		*worksheet_index = count;
+		return FREEXL_OK;
+	    }
+	  count++;
+	  worksheet = worksheet->next;
+      }
+    return FREEXL_XSLX_UNSELECTED_SHEET;
+}
+
+static int
+get_active_worksheet_ods (ods_workbook * workbook,
+			  unsigned short *worksheet_index)
+{
+/* ODS: retrieving the currently active worksheet index */
+    unsigned int count = 0;
+    ods_worksheet *worksheet;
+    if (!workbook)
+	return FREEXL_NULL_HANDLE;
+
+    worksheet = workbook->first;
+    while (worksheet)
+      {
+	  if (workbook->active_sheet == worksheet)
+	    {
+		*worksheet_index = count;
+		return FREEXL_OK;
+	    }
+	  count++;
+	  worksheet = worksheet->next;
+      }
+    return FREEXL_ODS_UNSELECTED_SHEET;
+}
+
 FREEXL_DECLARE int
-freexl_get_active_worksheet (const void *xls_handle,
+freexl_get_active_worksheet (const void *xl_handle,
 			     unsigned short *worksheet_index)
 {
 /* retrieving the currently active worksheet index */
     unsigned int count = 0;
     biff_sheet *worksheet;
-    biff_workbook *workbook = (biff_workbook *) xls_handle;
+    freexl_handle *handle = (freexl_handle *) xl_handle;
+    biff_workbook *workbook;
+    if (!handle)
+	return FREEXL_NULL_HANDLE;
+    if (handle->xlsx_handle != NULL)
+	return get_active_worksheet_xlsx (handle->xlsx_handle, worksheet_index);
+    if (handle->ods_handle != NULL)
+	return get_active_worksheet_ods (handle->ods_handle, worksheet_index);
+    workbook = handle->xls_handle;
     if (!workbook)
 	return FREEXL_NULL_HANDLE;
     if (!worksheet_index)
@@ -4631,12 +4986,52 @@ freexl_get_active_worksheet (const void *xls_handle,
     return FREEXL_BIFF_UNSELECTED_SHEET;
 }
 
+static int
+worksheet_dimensions_xlsx (xlsx_workbook * workbook, unsigned int *rows,
+			   unsigned short *columns)
+{
+/* XLSX: dimensions: currently selected Worksheet */
+    if (!workbook)
+	return FREEXL_NULL_HANDLE;
+
+    if (workbook->active_sheet == NULL)
+	return FREEXL_XSLX_UNSELECTED_SHEET;
+
+    *rows = workbook->active_sheet->max_row;
+    *columns = workbook->active_sheet->max_cell + 1;
+    return FREEXL_OK;
+}
+
+static int
+worksheet_dimensions_ods (ods_workbook * workbook, unsigned int *rows,
+			  unsigned short *columns)
+{
+/* ODS: dimensions: currently selected Worksheet */
+    if (!workbook)
+	return FREEXL_NULL_HANDLE;
+
+    if (workbook->active_sheet == NULL)
+	return FREEXL_ODS_UNSELECTED_SHEET;
+
+    *rows = workbook->active_sheet->max_row;
+    *columns = workbook->active_sheet->max_cell + 1;
+    return FREEXL_OK;
+}
+
 FREEXL_DECLARE int
-freexl_worksheet_dimensions (const void *xls_handle, unsigned int *rows,
+freexl_worksheet_dimensions (const void *xl_handle, unsigned int *rows,
 			     unsigned short *columns)
 {
 /* dimensions: currently selected Worksheet */
-    biff_workbook *workbook = (biff_workbook *) xls_handle;
+    freexl_handle *handle = (freexl_handle *) xl_handle;
+    biff_workbook *workbook;
+    if (!handle)
+	return FREEXL_NULL_HANDLE;
+    if (handle->xlsx_handle != NULL)
+	return worksheet_dimensions_xlsx (handle->xlsx_handle, rows, columns);
+    if (handle->ods_handle != NULL)
+	return worksheet_dimensions_ods (handle->ods_handle, rows, columns);
+    workbook = handle->xls_handle;
     if (!workbook)
 	return FREEXL_NULL_HANDLE;
     if (!rows)
@@ -4658,12 +5053,37 @@ freexl_worksheet_dimensions (const void *xls_handle, unsigned int *rows,
     return FREEXL_OK;
 }
 
+static int
+get_SST_string_xlsx (xlsx_workbook * workbook, unsigned short string_index,
+		     const char **string)
+{
+/* XLSX: dimensions: attempting to retrieve some SST entry [by index] */
+    if (!workbook)
+	return FREEXL_NULL_HANDLE;
+
+    *string = NULL;
+    if (workbook->strings == NULL)
+	return FREEXL_XLSX_INVALID_SST;
+    if (string_index < workbook->n_strings)
+      {
+	  *string = *(workbook->strings + string_index);
+	  return FREEXL_OK;
+      }
+    return FREEXL_XLSX_ILLEGAL_SST_INDEX;
+}
+
 FREEXL_DECLARE int
-freexl_get_SST_string (const void *xls_handle, unsigned short string_index,
+freexl_get_SST_string (const void *xl_handle, unsigned short string_index,
 		       const char **string)
 {
 /* attempting to retrieve some SST entry [by index] */
-    biff_workbook *workbook = (biff_workbook *) xls_handle;
+    freexl_handle *handle = (freexl_handle *) xl_handle;
+    biff_workbook *workbook;
+    if (!handle)
+	return FREEXL_NULL_HANDLE;
+    if (handle->xlsx_handle != NULL)
+	return get_SST_string_xlsx (handle->xlsx_handle, string_index, string);
+    workbook = handle->xls_handle;
     if (!workbook)
 	return FREEXL_NULL_HANDLE;
     if (!string)
@@ -4685,13 +5105,293 @@ freexl_get_SST_string (const void *xls_handle, unsigned short string_index,
     return FREEXL_BIFF_ILLEGAL_SST_INDEX;
 }
 
+static char *
+find_datetime_xlsx (xlsx_workbook * workbook)
+{
+/* managing the DATETIME strings dynamic allocation - XLSX */
+    xml_datetime *date;
+    int r;
+    if (workbook->first_date == NULL)
+      {
+	  /* inserting the first block into the list */
+	  date = malloc (sizeof (xml_datetime));
+	  for (r = 0; r < MAX_DATETIME_STR; r++)
+	      date->datetime[r][0] = '\0';
+	  date->next_str = 1;
+	  date->next = NULL;
+	  workbook->first_date = date;
+	  workbook->last_date = date;
+	  return date->datetime[0];
+      }
+    if (workbook->last_date->next_str >= 128)
+      {
+	  /* inserting a further block into the list */
+	  date = malloc (sizeof (xml_datetime));
+	  for (r = 0; r < MAX_DATETIME_STR; r++)
+	      date->datetime[r][0] = '\0';
+	  date->next_str = 1;
+	  date->next = NULL;
+	  workbook->last_date->next = date;
+	  workbook->last_date = date;
+	  return date->datetime[0];
+      }
+/* continuing to consume the current block */
+    r = workbook->last_date->next_str;
+    workbook->last_date->next_str += 1;
+    return workbook->last_date->datetime[r];
+}
+
+static char *
+find_datetime_ods (ods_workbook * workbook)
+{
+/* managing the DATETIME strings dynamic allocation - ODS */
+    xml_datetime *date;
+    int r;
+    if (workbook->first_date == NULL)
+      {
+	  /* inserting the first block into the list */
+	  date = malloc (sizeof (xml_datetime));
+	  for (r = 0; r < MAX_DATETIME_STR; r++)
+	      date->datetime[r][0] = '\0';
+	  date->next_str = 1;
+	  date->next = NULL;
+	  workbook->first_date = date;
+	  workbook->last_date = date;
+	  return date->datetime[0];
+      }
+    if (workbook->last_date->next_str >= 128)
+      {
+	  /* inserting a further block into the list */
+	  date = malloc (sizeof (xml_datetime));
+	  for (r = 0; r < MAX_DATETIME_STR; r++)
+	      date->datetime[r][0] = '\0';
+	  date->next_str = 1;
+	  date->next = NULL;
+	  workbook->last_date->next = date;
+	  workbook->last_date = date;
+	  return date->datetime[0];
+      }
+/* continuing to consume the current block */
+    r = workbook->last_date->next_str;
+    workbook->last_date->next_str += 1;
+    return workbook->last_date->datetime[r];
+}
+
+static int
+get_cell_value_xlsx (xlsx_workbook * workbook, unsigned int row,
+		     unsigned short column, FreeXL_CellValue * val)
+{
+/* attempting to fetch a cell value */
+    xlsx_row *p_row;
+    xlsx_cell *p_col;
+
+    if (!workbook)
+	return FREEXL_NULL_HANDLE;
+    if (workbook->active_sheet == NULL)
+	return FREEXL_XSLX_UNSELECTED_SHEET;
+    if ((int) row >= workbook->active_sheet->max_row
+	|| (int) column > workbook->active_sheet->max_cell)
+	return FREEXL_ILLEGAL_CELL_ROW_COL;
+
+    if (workbook->active_sheet->rows == NULL)
+	goto stop;
+    p_row = *(workbook->active_sheet->rows + row);
+    if (p_row == NULL)
+	goto stop;
+
+    p_col = p_row->first;
+    while (p_col != NULL)
+      {
+	  /* looping on row columns */
+	  if ((unsigned int) (p_col->col_no) == column)
+	    {
+		if (p_col->assigned)
+		  {
+		      /* ok, found the requested Cell */
+		      val->type = FREEXL_CELL_NULL;
+		      if (p_col->is_datetime != XLSX_DATE_NONE)
+			{
+			    /* special case: DATE, TIME, DATETIME */
+			    char *datetime = find_datetime_xlsx (workbook);
+			    double value;
+			    int count;
+			    int hh;
+			    int mm;
+			    int ss;
+			    int year = 1900;
+			    int month = 1;
+			    int day = 1;
+			    if (p_col->type == XLSX_INTEGER)
+			      {
+				  value = 0.0;
+				  count = p_col->int_value;
+			      }
+			    else if (p_col->type == XLSX_DOUBLE)
+			      {
+				  count = (int) floor (p_col->dbl_value);
+				  value = p_col->dbl_value - count;
+			      }
+			    else
+			      {
+				  value = 0.0;
+				  count = 0;
+			      }
+			    compute_time (&hh, &mm, &ss, value);
+			    compute_date (&year, &month, &day, count);
+			    if (p_col->is_datetime == XLSX_DATE_SIMPLE)
+			      {
+				  sprintf (datetime,
+					   "%04d-%02d-%02d", year, month, day);
+				  val->type = FREEXL_CELL_DATE;
+			      }
+			    else if (p_col->is_datetime == XLSX_TIME_SIMPLE)
+			      {
+				  sprintf (datetime,
+					   "%02d:%02d:%02d", hh, mm, ss);
+				  val->type = FREEXL_CELL_TIME;
+			      }
+			    else
+			      {
+				  sprintf (datetime,
+					   "%04d-%02d-%02d %02d:%02d:%02d",
+					   year, month, day, hh, mm, ss);
+				  val->type = FREEXL_CELL_DATETIME;
+			      }
+			    //val->value.text_value = NULL;
+			    val->value.text_value = datetime;
+			}
+		      else
+			{
+			    /* ordinary values */
+			    if (p_col->type == XLSX_INTEGER)
+			      {
+				  val->type = FREEXL_CELL_INT;
+				  val->value.int_value = p_col->int_value;
+			      }
+			    if (p_col->type == XLSX_DOUBLE)
+			      {
+				  val->type = FREEXL_CELL_DOUBLE;
+				  val->value.double_value = p_col->dbl_value;
+			      }
+			    if (p_col->type == XLSX_STR_INDEX)
+			      {
+				  val->type = FREEXL_CELL_SST_TEXT;
+				  val->value.text_value =
+				      *(workbook->strings + p_col->str_index);
+			      }
+			}
+		      return FREEXL_OK;
+		  }
+	    }
+	  p_col = p_col->next;
+      }
+
+/* any undefined Cell is assumed to be NULL */
+  stop:
+    val->type = FREEXL_CELL_NULL;
+    return FREEXL_OK;
+}
+
+static void
+adjust_ods_datetime (char *datetime)
+{
+/* adjusting an ODS Datatine value */
+    char *p = datetime;
+    if (datetime == NULL)
+	return;
+    while (*p != '\0')
+      {
+	  if (*p == 'T')
+	      *p = ' ';
+	  p++;
+      }
+}
+
+static int
+get_cell_value_ods (ods_workbook * workbook, unsigned int row,
+		    unsigned short column, FreeXL_CellValue * val)
+{
+/* attempting to fetch a cell value */
+    ods_row *p_row;
+    ods_cell *p_col;
+
+    if (!workbook)
+	return FREEXL_NULL_HANDLE;
+    if (workbook->active_sheet == NULL)
+	return FREEXL_ODS_UNSELECTED_SHEET;
+    if ((int) row >= workbook->active_sheet->max_row
+	|| (int) column > workbook->active_sheet->max_cell)
+	return FREEXL_ILLEGAL_CELL_ROW_COL;
+
+    if (workbook->active_sheet->rows == NULL)
+	goto stop;
+    p_row = *(workbook->active_sheet->rows + row);
+    if (p_row == NULL)
+	goto stop;
+
+    p_col = p_row->first;
+    while (p_col != NULL)
+      {
+	  /* looping on row columns */
+	  if ((unsigned int) (p_col->col_no) == column)
+	    {
+		if (p_col->assigned)
+		  {
+		      /* ok, found the requested Cell */
+		      val->type = FREEXL_CELL_NULL;
+		      if (p_col->type == ODS_INTEGER
+			  || p_col->type == ODS_BOOLEAN)
+			{
+			    val->type = FREEXL_CELL_INT;
+			    val->value.int_value = p_col->int_value;
+			}
+		      if (p_col->type == ODS_FLOAT
+			  || p_col->type == ODS_CURRENCY
+			  || p_col->type == ODS_PERCENTAGE)
+			{
+			    val->type = FREEXL_CELL_DOUBLE;
+			    val->value.double_value = p_col->dbl_value;
+			}
+		      if (p_col->type == ODS_STRING || p_col->type == ODS_TIME)
+			{
+			    val->type = FREEXL_CELL_TEXT;
+			    val->value.text_value = p_col->txt_value;
+			}
+		      if (p_col->type == ODS_DATE)
+			{
+			    char *datetime = find_datetime_ods (workbook);
+			    strcpy (datetime, p_col->txt_value);
+			    adjust_ods_datetime (datetime);
+			    val->value.text_value = datetime;
+			    val->type = FREEXL_CELL_TEXT;
+			}
+		      return FREEXL_OK;
+		  }
+	    }
+	  p_col = p_col->next;
+      }
+
+/* any undefined Cell is assumed to be NULL */
+  stop:
+    val->type = FREEXL_CELL_NULL;
+    return FREEXL_OK;
+}
+
 FREEXL_DECLARE int
-freexl_get_cell_value (const void *xls_handle, unsigned int row,
+freexl_get_cell_value (const void *xl_handle, unsigned int row,
 		       unsigned short column, FreeXL_CellValue * val)
 {
 /* attempting to fetch a cell value */
     biff_cell_value *p_cell;
-    biff_workbook *workbook = (biff_workbook *) xls_handle;
+    freexl_handle *handle = (freexl_handle *) xl_handle;
+    biff_workbook *workbook;
+    if (!handle)
+	return FREEXL_NULL_HANDLE;
+    if (handle->xlsx_handle != NULL)
+	return get_cell_value_xlsx (handle->xlsx_handle, row, column, val);
+    if (handle->ods_handle != NULL)
+	return get_cell_value_ods (handle->ods_handle, row, column, val);
+    workbook = handle->xls_handle;
     if (!workbook)
 	return FREEXL_NULL_HANDLE;
     if (!val)
@@ -4702,6 +5402,8 @@ freexl_get_cell_value (const void *xls_handle, unsigned int row,
     else
 	return FREEXL_INVALID_HANDLE;
 
+    if (workbook->active_sheet == NULL)
+	return FREEXL_XSLX_UNSELECTED_SHEET;
     if (row >= workbook->active_sheet->rows
 	|| column >= workbook->active_sheet->columns)
 	return FREEXL_ILLEGAL_CELL_ROW_COL;
