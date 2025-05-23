@@ -8,7 +8,7 @@ CORE				   = freexl.obj
 XLSX				   = freexl_xlsx.obj
 ODS					   = freexl_ods.obj
 
-LIBOBJ	               =	$(CORE) $(XLSX) $(ODS)
+LIBOBJ	               =	$(CORE) $(XLSX) $(ODS) 
 FREEXL_DLL	 	       =	freexl$(VERSION).dll
 
 CFLAGS	=	/nologo -I. -Iheaders -IC:\OSGeo4W\include $(OPTFLAGS)
@@ -35,10 +35,7 @@ $(FREEXL_DLL):	freexl_i.lib
 freexl_i.lib:	$(LIBOBJ)
 	link /debug /dll /out:$(FREEXL_DLL) \
 		/implib:freexl_i.lib $(LIBOBJ) \
-		C:\OSGeo4W\lib\iconv.lib \
-		C:\OSGeo4W\lib\libexpat.lib \
-		C:\OSGeo4W\lib\libminizip.lib \
-		C:\OSGeo4w\lib\zlib.lib
+		$(LIBOBJFLAGS) $(LIBS) 
 	if exist $(FREEXL_DLL).manifest mt -manifest \
 		$(FREEXL_DLL).manifest -outputresource:$(FREEXL_DLL);2 
 

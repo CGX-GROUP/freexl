@@ -35,10 +35,7 @@ $(FREEXL_DLL):	freexl_i.lib
 freexl_i.lib:	$(LIBOBJ)
 	link /debug /dll /out:$(FREEXL_DLL) \
 		/implib:freexl_i.lib $(LIBOBJ) \
-		C:\OSGeo4w64\lib\iconv.lib \
-		C:\OSGeo4W64\lib\libexpat.lib \
-		C:\OSGeo4W64\lib\libminizip.lib \
-		C:\OSGeo4w64\lib\zlib.lib
+		$(LIBOBJFLAGS) $(LIBS) 
 	if exist $(FREEXL_DLL).manifest mt -manifest \
 		$(FREEXL_DLL).manifest -outputresource:$(FREEXL_DLL);2 
 
